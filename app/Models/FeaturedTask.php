@@ -1,0 +1,19 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class FeaturedTask extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'task_id', 'subscription_category_id', 'status'
+    ];
+
+    public function task(){
+        return $this->belongsTo('App\Models\Task');
+    }
+}
