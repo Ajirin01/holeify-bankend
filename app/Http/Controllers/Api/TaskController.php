@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Task;
+use App\Models\Category;
 
 use Pusher\Pusher;
 
@@ -17,7 +18,27 @@ class TaskController extends Controller
     }
 
     public function queryTask(Request $request){
-        $tasks = Task::where($request->all())->get();
+        if($request->has('query')){
+            $query = $request->input('query');
+            $status = $request->input('status');
+
+            // $tasks = Task::whereRaw($query)
+            //             ->where('status', $status)
+            //             ->orderBy('reward', 'desc')
+            //             ->get();
+
+            $tasks = Task::whereRaw($query)
+                        ->where('status', $status)
+                        ->join('requesters', 'tasks.requester_id', '=', 'requesters.id')
+                        ->join('users', 'requesters.user_id', '=', 'users.id')
+                        ->orderByRaw("CASE WHEN users.role = 'admin' THEN 0 ELSE 1 END, reward DESC")
+                        ->select('tasks.*', 'users.role') // Select only the columns from the 'tasks' table
+                        ->get();
+
+        }else{
+            $tasks = Task::where($request->all())->get();
+        }
+
         return response()->json($tasks);
     }
 
@@ -37,18 +58,24 @@ class TaskController extends Controller
 
         $task = Task::create($validatedData);
 
-        // publish a notification to Pusher
-        // $pusher = new Pusher(
-        //     config('broadcasting.connections.pusher.key'),
-        //     config('broadcasting.connections.pusher.secret'),
-        //     config('broadcasting.connections.pusher.app_id'),
-        //     [
-        //         'cluster' => config('broadcasting.connections.pusher.options.cluster'),
-        //         'encrypted' => false
-        //     ]
-        // );
+        $task_category = Category::find($request->category_id);
+
+        $pusher = new Pusher(
+            config('broadcasting.connections.pusher.key'),
+            config('broadcasting.connections.pusher.secret'),
+            config('broadcasting.connections.pusher.app_id'),
+            [
+                'cluster' => config('broadcasting.connections.pusher.options.cluster'),
+                'encrypted' => false
+            ]
+        );
+
+        if($task_category->name != "custom"){
+            // publish a notification to Pusher
+            $pusher->trigger('tasks', 'task-added', [$task]);
+        }
+
         
-        // $pusher->trigger('tasks', 'task-added', $task);
 
         return response()->json($task, 201);
     }
@@ -101,5 +128,35 @@ class TaskController extends Controller
         $task->delete();
 
         return response()->json(['message' => 'Task deleted']);
+    }
+
+    public function updateTasksStatus(Request $request)
+    {
+        $status = $request->status;
+        $IDs = $request->IDs;
+        $requester_id = $request->requester_id;
+
+        Task::whereIn('id', $IDs)->update(['status' => $status]);
+
+        // publish a notification to Pusher
+        $pusher = new Pusher(
+            config('broadcasting.connections.pusher.key'),
+            config('broadcasting.connections.pusher.secret'),
+            config('broadcasting.connections.pusher.app_id'),
+            [
+                'cluster' => config('broadcasting.connections.pusher.options.cluster'),
+                'encrypted' => false
+            ]
+        );
+
+        if ($status === 'approved') {
+            // Get the submitted tasks with the updated status as "approved"
+            $approvedTasks = Task::whereIn('id', $IDs)->where('status', 'approved')->get();
+            
+            $pusher->trigger('tasks', 'task-added', $approvedTasks);
+        }
+
+        // Return the updated SubmittedTasks related to the worker_id
+        return response()->json(Task::all(), 200);
     }
 }

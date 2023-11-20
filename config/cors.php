@@ -6,7 +6,7 @@ return [
     'allowed_methods' => ['*'],
 
     // 'allowed_origins' => ['*'],
-    'allowed_origins' => ['http://localhost'],
+    'allowed_origins' => ['http://localhost', 'https://holeify.com', 'https://www.holeify.com', 'https://app.flutterwave.com', 'https://flutterwave.com'],
 
     'allowed_origins_patterns' => [],
 

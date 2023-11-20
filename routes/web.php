@@ -34,3 +34,5 @@ Auth::routes();
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
 Route::post('verify-payment', [App\Http\Controllers\PaymentController::class, 'verify']);
+
+Route::post('webhook', [App\Http\Controllers\WebhookController::class, 'handle']);

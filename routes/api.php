@@ -36,6 +36,7 @@ Route::post('update-done-tasks-status', [App\Http\Controllers\Api\DoneTaskContro
 Route::apiResource('submitted-tasks', 'App\Http\Controllers\Api\SubmittedTaskController');
 Route::post('get-submitted-tasks', [App\Http\Controllers\Api\SubmittedTaskController::class, 'getSubmittedTask']);
 Route::post('update-submitted-tasks-status', [App\Http\Controllers\Api\SubmittedTaskController::class, 'updateSubmittedTasksStatus']);
+
 // Route::post('delete-submitted-tasks', [App\Http\Controllers\Api\SubmittedTaskController::class, 'updateSubmittedTasksStatus']);
 
 
@@ -45,8 +46,11 @@ Route::apiResource('fund-wallets', 'App\Http\Controllers\Api\FundWalletControlle
 Route::apiResource('payment-histories', 'App\Http\Controllers\Api\PaymentHistoryController');
 Route::apiResource('requesters', 'App\Http\Controllers\Api\RequesterController');
 Route::apiResource('subscription-categories', 'App\Http\Controllers\Api\SubscriptionCategoryController');
+
 Route::apiResource('tasks', 'App\Http\Controllers\Api\TaskController');
 Route::post('/queryTask', [App\Http\Controllers\Api\TaskController::class, 'queryTask']);
+Route::post('update-tasks-status', [App\Http\Controllers\Api\TaskController::class, 'updateTasksStatus']);
+
 Route::apiResource('task-types', 'App\Http\Controllers\Api\TaskTypeController');
 Route::apiResource('workers', 'App\Http\Controllers\Api\WorkerController');
 
@@ -63,4 +67,15 @@ Route::post('get-withdrawal-details', [App\Http\Controllers\Api\WithdrawalContro
 Route::post('query-withdrawals', [App\Http\Controllers\Api\WithdrawalController::class, 'queryWithdrawals']);
 
 Route::post('update-withdrawal-status', [App\Http\Controllers\Api\WithdrawalController::class, 'updateWithdrawalsStatus']);
+
+Route::post('create-task-temp-data', [App\Http\Controllers\Api\TaskTempDataController::class, 'createTaskTempData']);
+Route::get('get-task-temp-data/{transaction_id}', [App\Http\Controllers\Api\TaskTempDataController::class, 'getTaskTempData']);
+
+
+Route::post('webhook', [App\Http\Controllers\Api\WebhookController::class, 'handle']);
+
+
+
+
+
 
