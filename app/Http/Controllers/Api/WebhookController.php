@@ -12,36 +12,36 @@ class WebhookController extends Controller
     public function handle(Request $request)
     {
         // Process the webhook payload
-        $data = [
-            'task_data' => json_encode($request->all()),
-            'transaction_id' => "11111111111111"
-        ];
+        // $data = [
+        //     'task_data' => json_encode($request->all()),
+        //     'transaction_id' => "11111111111111"
+        // ];
 
-        TaskCreateTempData::create($data);
+        // TaskCreateTempData::create($data);
 
-        // try {
-        //     // Verify the webhook signature (implement this function)
-        //     $isValidSignature = $this->verifySignature($request);
+        try {
+            // Verify the webhook signature (implement this function)
+            $isValidSignature = $this->verifySignature($request);
 
-        //     if (!$isValidSignature) {
-        //         Log::warning('Invalid webhook signature');
-        //         return response()->json(['status' => 'error', 'message' => 'Invalid signature'], 403);
-        //     }
+            if (!$isValidSignature) {
+                Log::warning('Invalid webhook signature');
+                return response()->json(['status' => 'error', 'message' => 'Invalid signature'], 403);
+            }
 
-        //     // Process the webhook payload
-        //     $data = [
-        //         'task_data' => json_encode($request->all()),
-        //         'transaction_id' => "11111111111111"
-        //     ];
+            // Process the webhook payload
+            $data = [
+                'task_data' => json_encode($request->all()),
+                'transaction_id' => "11111111111111"
+            ];
 
-        //     TaskCreateTempData::create($data);
+            TaskCreateTempData::create($data);
 
-        //     Log::info('Webhook handled successfully');
-        //     return response()->json(['status' => 'success']);
-        // } catch (\Exception $e) {
-        //     Log::error('Error handling webhook: ' . $e->getMessage());
-        //     return response()->json(['status' => 'error', 'message' => 'Internal server error'], 500);
-        // }
+            Log::info('Webhook handled successfully');
+            return response()->json(['status' => 'success']);
+        } catch (\Exception $e) {
+            Log::error('Error handling webhook: ' . $e->getMessage());
+            return response()->json(['status' => 'error', 'message' => 'Internal server error'], 500);
+        }
     }
 
     private function verifySignature(Request $request)

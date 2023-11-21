@@ -8,8 +8,8 @@ class CorsMiddleware
 {
     public function handle($request, Closure $next)
     {
-        // $allowedOrigins = ['http://localhost', 'https://holeify.com', 'https://www.holeify.com', 'https://app.flutterwave.com', 'https://flutterwave.com'];
-            $allowedOrigins = ['*'];
+        $allowedOrigins = ['http://localhost', 'https://holeify.com', 'https://www.holeify.com', 'https://app.flutterwave.com', 'https://flutterwave.com'];
+            // $allowedOrigins = ['*'];
 
         if (in_array($request->header('Origin'), $allowedOrigins)) {
             return $next($request)
