@@ -17,6 +17,10 @@ class Worker extends Model
         return $this->belongsTo('App\Models\User');
     }
 
+    public function withdrawals(){
+        return $this->hasMany('App\Models\Withdrawal');
+    }
+
     public function done_tasks(){
         return $this->hasMany('App\Models\DoneTask');
     }
