@@ -128,58 +128,37 @@ class WithdrawalController extends Controller
         // return json_encode($withdrawals);
         foreach ($withdrawals as $withdrawal) {
             $worker = $withdrawal->worker;
-
-            // return json_encode($withdrawal->worker->account_number);
-
-            try {
-                // Perform the transfer using Paystack API
-                // $transferSuccessful = $this->performPaystackTransfer($worker, $withdrawal->amount);
-                $data = [
-                    "name"=> $worker->name,
-                    'bank_code'=> $worker->bank_code,
-                    "account_number"=> $withdrawal->worker->account_number,
-                    "amount"=>2000,
-                    "currency"=> "NGN",
-                    "bank_name"=> $worker->bank_name,
-                    "narration"=> "this week payment from hoelify",
-                ];
-                
-                $transferSuccessful = $this->initiateTransfer($data);
-                // echo json_encode(["done", $transferSuccessful]);
-
-                $transfer_response = $transferSuccessful->original;
-                // return response()->json($transfer_response[0]['status']);
-
-                if ($transfer_response[0]['status'] === "success") {
-                    // Update withdrawal status to 'completed'
-                    $withdrawal->update(['status' => 'processing']);
-                    $done_tasks = json_decode($withdrawal->done_tasks);
-                    foreach ($done_tasks as $key => $done_task) {
-                        $done_task_object = DoneTask::find($done_task->id);
-                        $done_task_object->update(['paid'=> true]);
-                        return response()->json($done_task_object);
-                    }
-                    // echo "transaction success";
-                } else {
-                    // Update withdrawal status to 'failed'
-                    $withdrawal->update(['status' => 'failed']);
-                    // echo "transction failed";
-                    return response()->json(["message"=> $transferSuccessful]);
-                }
-            } catch (\Exception $e) {
-
-                // Display a user-friendly error message
-                // echo "An error occurred. Please try again later."; // You can customize this message
-
-                // If you are in a development environment, you might want to display more detailed information
-                if (config('app.env') === 'local') {
-                    // echo "<br><pre>{$e->getTraceAsString()}</pre>";
-                    return response()->json(["message"=> $e->getTraceAsString()]);
-                }
-            }
+            // Update withdrawal status to 'completed'
+            $withdrawal->update(['status' => 'processing']);
         }
 
-        return response()->json(["message"=> "payout processing"]);
+        // Define the CSV file path
+        $csvFilePath = storage_path('app/public/withdrawals.csv');
+
+        // Open the CSV file for writing
+        $csvFile = fopen($csvFilePath, 'w');
+
+        // Write the header row to the CSV file
+        fputcsv($csvFile, ["Account Number", "Bank", "Amount", "Narration"]);
+
+        // Write data rows to the CSV file
+        foreach ($withdrawals as $withdrawal) {
+            $worker = $withdrawal->worker;
+            fputcsv($csvFile, [
+                $worker->account_number,
+                $worker->bank_code,
+                $withdrawal->amount,
+                'Earning payment from holeify to ' . $worker->name
+            ]);
+            
+            // Update withdrawal status to 'processing'
+            // $withdrawal->update(['status' => 'processing']);
+        }
+
+        // Close the CSV file
+        fclose($csvFile);
+
+        return response()->json(["message"=> "payout processing", "csv_path"=> "storage/withdrawals.csv"]);
     }
 
     public function workersToPay(Request $request){
@@ -303,20 +282,6 @@ class WithdrawalController extends Controller
         ->get();
 
         return $workers_to_pay;
-    }
-
-    public function processPaymentToWorkers(Request $request){
-        $batchSize = 100;
-        $totalWorkers = Worker::count();
-        $totalBatches = ceil($totalWorkers / $batchSize);
-
-        for ($batchNumber = 1; $batchNumber <= $totalBatches; $batchNumber++) {
-            $offset = ($batchNumber - 1) * $batchSize;
-            $workers = Worker::skip($offset)->take($batchSize)->get();
-
-            ProcessWorkerTransfer::dispatch($workers)->onQueue('default');
-        }
-        // return response()->json($request->all());
     }
 
     public function updateWithdrawalsStatus(Request $request)
